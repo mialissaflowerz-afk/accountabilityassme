@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Accountability &amp; Dynamic Assessment</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #e0e7ff;
+            --border: #cbd5e1;
+            --border-hover: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 3rem 1.5rem;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .progress-wrapper {
+            background: var(--card-bg);
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0,0,0,0.03);
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-meta {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .progress-track-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background-color: var(--bg-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+
+        .progress-container {
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary) 0%, #818cf8 100%);
+            height: 100%;
+            width: 33.3%;
+            border-radius: 9999px;
+            transition: var(--transition);
+        }
+
+        .wizard-container {
+            position: relative;
+            min-height: 350px;
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .question-card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-meta {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 1.75rem;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            padding: 1.25rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: var(--card-bg);
+        }
+
+        .option-item:hover {
+            border-color: var(--border-hover);
+            background-color: #f8fafc;
+        }
+
+        .option-item input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .custom-radio {
+            position: relative;
+            height: 20px;
+            width: 20px;
+            background-color: transparent;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            margin-right: 1rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .option-item:hover .custom-radio {
+            border-color: var(--border-hover);
+        }
+
+        .option-item input[type="radio"]:checked ~ .custom-radio {
+            border-color: var(--primary);
+            background-color: var(--primary);
+        }
+
+        .option-item input[type="radio"]:checked ~ .custom-radio::after {
+            content: "";
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .option-item.selected-chip {
+            border-color: var(--primary);
+            background-color: #f5f3ff;
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .option-label {
+            font-size: 1rem;
+            color: var(--text-main);
+            user-select: none;
+            line-height: 1.5;
+        }
+
+        .other-field-wrapper {
+            width: 100%;
+            margin-top: 0.75rem;
+            display: none;
+        }
+
+        .option-item.selected-chip .other-field-wrapper {
+            display: block;
+        }
+
+        .other-input {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            outline: none;
+            background-color: var(--card-bg);
+            transition: var(--transition);
+            color: var(--text-main);
+        }
+
+        .other-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Navigation Button Bars */
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            padding: 0.75rem 1.75rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .back-btn {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+            border-color: var(--border-hover);
+            background-color: #f1f5f9;
+        }
+
+        .next-btn {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+            margin-left: auto;
+        }
+
+        .next-btn:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .next-btn:disabled {
+            background-color: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .results-card {
+            background: var(--card-bg);
+            border: 2px solid var(--text-main);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.1);
+            display: none;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 0.75rem;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-self { background-color: #fee2e2; color: var(--danger); }
+        .badge-partner { background-color: #ffedd5; color: var(--warning); }
+        .badge-dynamic { background-color: #e0e7ff; color: var(--primary); }
+
+        .analysis-box {
+            background-color: #f8fafc;
+            padding: 1.75rem;
+            border-radius: var(--radius-md);
+            font-size: 1.05rem;
+            color: var(--text-main);
+            border-left: 5px solid var(--primary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .reset-btn {
+            background-color: var(--text-main);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .reset-btn:hover {
+            background-color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>The Accountability &amp; Dynamic Assessment</h1>
+        <p>Uncover where relationship friction is sourced through adaptive, structured prompts.</p>
+    </header>
+
+    <!-- Progress Tracking bar -->
+    <div class="progress-wrapper" id="progressWrapper">
+        <div class="progress-header">
+            <div class="progress-meta" id="progressText">Question 1 of 3</div>
+            <div class="progress-track-name" id="trackName">Initializing Setup</div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <!-- Active Wizard Window -->
+    <div class="wizard-container">
+        <form id="wizardForm" onsubmit="return false;">
+            <div id="active-question-wrapper">
+                <!-- Programmatically populated by engine -->
+            </div>
+
+            <div class="nav-container">
+                <button type="button" class="nav-btn back-btn" id="backBtn" style="display: none;">Back</button>
+                <button type="button" class="nav-btn next-btn" id="nextBtn" disabled="disabled">Next</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Dynamic Output Result Window -->
+    <div id="resultsCard" class="results-card">
+        <div id="outcomeBadge" class="badge">Dynamic Profile</div>
+        <h2 id="outcomeTitle">Evaluation Profile</h2>
+        <div class="analysis-box" id="analysisText">
+            <!-- Dynamic feedback array printed here -->
+        </div>
+        <button type="button" class="reset-btn" id="resetBtn">Retake Assessment</button>
+    </div>
+</div>
+
+<script>
+/*<![CDATA[*/
+    document.addEventListener("DOMContentLoaded", function() {
+        // Step Registry Schema mapping out branching options based on input actions
+        const steps = {
+            "start": {
+                meta: "Step 1: The Gateway",
+                text: "When friction, arguments, or bad moods start, what is the very first spark?",
+                track: "Undetermined",
+                options: [
+                    { label: "My own reaction, hyper-vigilance, internal stress, or overthinking.", val: "A", next: "self_path_q2" },
+                    { label: "My partner's behavior, tone of voice, passive-aggression, or lack of effort.", val: "B", next: "partner_path_q2" },
+                    { label: "A dynamic loop; one person reacts, causing the other to defend, spiraling instantly.", val: "C", next: "dynamic_path_q2" },
+                    { label: "Other (Describe your own custom trigger sequence):", val: "D", next: "dynamic_path_q2", isOther: true }
+                ]
+            },
+            
+            // Self-driven Path Branch (A)
+            "self_path_q2": {
+                meta: "Step 2: Internal Accountability Check",
+                text: "When you realize you've snapped, overreacted, or initiated an argument, what occurs next?",
+                track: "Self-Reflection Track",
+                options: [
+                    { label: "I find it incredibly hard to drop my defenses; I make excuses or shutdown.", val: "A", next: "self_path_q3" },
+                    { label: "I apologize sincerely once I calm down, and work on repairing the dynamic.", val: "B", next: "self_path_q3" },
+                    { label: "Other (How do you handle admitting mistakes?):", val: "D", next: "self_path_q3", isOther: true }
+                ]
+            },
+            "self_path_q3": {
+                meta: "Step 3: Stress Management",
+                text: "When external life stress hits (professional, family, financial), how does it bleed into your home space?",
+                track: "Self-Reflection Track",
+                options: [
+                    { label: "I use my partner or relationship as an emotional outlet / punching bag.", val: "A", next: "results" },
+                    { label: "I withdraw completely, refusing connection and isolating myself entirely.", val: "B", next: "results" },
+                    { label: "Other (How do you handle life pressure?):", val: "D", next: "results", isOther: true }
+                ]
+            },
+
+            // Partner-driven Path Branch (B)
+            "partner_path_q2": {
+                meta: "Step 2: Boundaries &amp; Deflection",
+                text: "How does your partner behave when you try to establish a boundary or communicate hurt feelings?",
+                track: "Partner-Behavior Track",
+                options: [
+                    { label: "They reverse it (blame-shifting/gaslighting) until I am the one apologizing.", val: "A", next: "partner_path_q3" },
+                    { label: "They shut down, withdraw, or give me the silent treatment for hours.", val: "B", next: "partner_path_q3" },
+                    { label: "Other (Describe how your partner shifts ownership):", val: "D", next: "partner_path_q3", isOther: true }
+                ]
+            },
+            "partner_path_q3": {
+                meta: "Step 3: Source of Isolation",
+                text: "When you feel lonely or anxious in the relationship, what is the core source of that feeling?",
+                track: "Partner-Behavior Track",
+                options: [
+                    { label: "A rational reaction to their unreliability, secrets, or inconsistent affection.", val: "A", next: "results" },
+                    { label: "A constant feeling that my baseline security is at the mercy of their unpredictable moods.", val: "B", next: "results" },
+                    { label: "Other (What triggers your insecurity?):", val: "D", next: "results", isOther: true }
+                ]
+            },
+
+            // Dynamic Loop Path Branch (C/D)
+            "dynamic_path_q2": {
+                meta: "Step 2: System Roles",
+                text: "When you get locked into an argument, what relational positions do you both assume?",
+                track: "Systemic Loop Track",
+                options: [
+                    { label: "Classic loop: One of us pursues/demands answers, and the other retreats/stonewalls.", val: "A", next: "dynamic_path_q3" },
+                    { label: "Symmetrical escalation: We both get louder, meaner, and completely defensive.", val: "B", next: "dynamic_path_q3" },
+                    { label: "Other (What roles do you both step into?):", val: "D", next: "dynamic_path_q3", isOther: true }
+                ]
+            },
+            "dynamic_path_q3": {
+                meta: "Step 3: Core Intentions",
+                text: "What do you believe keeps this system loop running day after day?",
+                track: "Systemic Loop Track",
+                options: [
+                    { label: "We genuinely want to connect, but our default habits trigger each other's trauma.", val: "A", next: "results" },
+                    { label: "We have both emotionally checked out and are just acting out of old, defensive habits.", val: "B", next: "results" },
+                    { label: "Other (What keeps you in this cycle?):", val: "D", next: "results", isOther: true }
+                ]
+            }
+        };
+
+        // State Machine Tracking Variables
+        let currentStepId = "start";
+        let pathHistory = [];
+        let answers = {};
+
+        const wrapper = document.getElementById("active-question-wrapper");
+        const backBtn = document.getElementById("backBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const progressWrapper = document.getElementById("progressWrapper");
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const trackName = document.getElementById("trackName");
+        const resultsCard = document.getElementById("resultsCard");
+
+        function renderStep() {
+            const step = steps[currentStepId];
+            if (!step) return;
+
+            // Update UI Progress Metrics
+            const totalSteps = 3;
+            const stepIndex = pathHistory.length + 1;
+            const percent = (stepIndex / totalSteps) * 100;
+            progressBar.style.width = `${percent}%`;
+            progressText.innerText = `Question ${stepIndex} of ${totalSteps}`;
+            trackName.innerText = step.track;
+
+            // Generate HTML layout for step
+            let html = `
+                <div class="question-card active">
+                    <div class="question-meta">${step.meta}</div>
+                    <div class="question-text">${step.text}</div>
+                    <div class="options-list">
+            `;
+
+            step.options.forEach((opt, idx) => {
+                const checked = (answers[currentStepId] && answers[currentStepId].val === opt.val) ? 'checked="checked"' : '';
+                const selectedClass = checked ? 'selected-chip' : '';
+                const textVal = (answers[currentStepId] && answers[currentStepId].otherText) ? answers[currentStepId].otherText : '';
+
+                if (opt.isOther) {
+                    html += `
+                        <label class="option-item ${selectedClass}">
+                            <input type="radio" name="options" value="${opt.val}" data-next="${opt.next}" ${checked} />
+                            <div class="custom-radio"></div>
+                            <div class="option-label" style="width: 100%;">
+                                ${opt.label}
+                                <div class="other-field-wrapper">
+                                    <input type="text" class="other-input" placeholder="Type your experience here..." value="${textVal}" />
+                                </div>
+                            </div>
+                        </label>
+                    `;
+                } else {
+                    html += `
+                        <label class="option-item ${selectedClass}">
+                            <input type="radio" name="options" value="${opt.val}" data-next="${opt.next}" ${checked} />
+                            <div class="custom-radio"></div>
+                            <span class="option-label">${opt.label}</span>
+                        </label>
+                    `;
+                }
+            });
+
+            html += `</div></div>`;
+            wrapper.innerHTML = html;
+
+            // Wire up event listeners to choices
+            const listItems = wrapper.querySelectorAll(".option-item");
+            listItems.forEach(item => {
+                const radio = item.querySelector('input[type="radio"]');
+                const textInput = item.querySelector('.other-input');
+
+                radio.addEventListener("change", function() {
+                    listItems.forEach(el => el.classList.remove("selected-chip"));
+                    item.classList.add("selected-chip");
+                    
+                    if (textInput) {
+                        textInput.focus();
+                    }
+                    
+                    nextBtn.disabled = false;
+                });
+
+                if (textInput) {
+                    textInput.addEventListener("input", function() {
+                        if (!radio.checked) {
+                            radio.checked = true;
+                            listItems.forEach(el => el.classList.remove("selected-chip"));
+                            item.classList.add("selected-chip");
+                        }
+                        nextBtn.disabled = this.value.trim() === "";
+                    });
+                }
+            });
+
+            // Set back button state
+            backBtn.style.display = pathHistory.length > 0 ? "block" : "none";
+            
+            // Set next button state based on existing input
+            const checkedRadio = wrapper.querySelector('input[name="options"]:checked');
+            if (checkedRadio) {
+                if (checkedRadio.value === "D") {
+                    const textInput = checkedRadio.closest(".option-item").querySelector(".other-input");
+                    nextBtn.disabled = !textInput || textInput.value.trim() === "";
+                } else {
+                    nextBtn.disabled = false;
+                }
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+
+        // Navigation forward step thread
+        nextBtn.addEventListener("click", function() {
+            const checkedRadio = wrapper.querySelector('input[name="options"]:checked');
+            if (!checkedRadio) return;
+
+            const val = checkedRadio.value;
+            const nextStep = checkedRadio.getAttribute("data-next");
+            const otherInput = checkedRadio.closest(".option-item").querySelector(".other-input");
+            const otherText = otherInput ? otherInput.value.trim() : "";
+
+            // Record input
+            answers[currentStepId] = { val: val, otherText: otherText, nextStep: nextStep };
+            pathHistory.push(currentStepId);
+
+            if (nextStep === "results") {
+                renderResults();
+            } else {
+                currentStepId = nextStep;
+                renderStep();
+            }
+        });
+
+        // Navigation backward step thread
+        backBtn.addEventListener("click", function() {
+            if (pathHistory.length === 0) return;
+            currentStepId = pathHistory.pop();
+            renderStep();
+        });
+
+        function renderResults() {
+            // Hide wizard, progress, and buttons
+            document.querySelector(".wizard-container").style.display = "none";
+            progressWrapper.style.display = "none";
+
+            const badge = document.getElementById("outcomeBadge");
+            const title = document.getElementById("outcomeTitle");
+            const text = document.getElementById("analysisText");
+
+            // Evaluate tracking tags through path history
+            const gatewayVal = answers["start"].val;
+            
+            let badgeClass = "badge-dynamic";
+            let badgeText = "System Loop";
+            let profileTitle = "Evaluating Dynamic Profile";
+            let profileDesc = "";
+
+            if (gatewayVal === "A") {
+                badgeClass = "badge-self";
+                badgeText = "Self-Driven Profile";
+                profileTitle = "The Mirror Phase";
+                profileDesc = "<strong>Your Diagnostic:</strong> The assessment shows that your current relationship friction is heavily centered in your internal coping mechanisms, anxiety triggers, or daily emotional energy habits. While your partner may be offering a stable baseline, your internal stress is bleeding through. <br/><br/><em>Focus Area:</em> Prioritizing your individual healing, nervous system regulation, and clear-headed communication will have a rapid, positive impact on your relationship dynamics.";
+            } else if (gatewayVal === "B") {
+                badgeClass = "badge-partner";
+                badgeText = "Partner-Driven Profile";
+                profileTitle = "The Boundary & Reality Phase";
+                profileDesc = "<strong>Your Diagnostic:</strong> The assessment indicates that your distress is a direct, rational response to erratic, evasive, or emotionally neglectful behaviors from your partner. You are running into hard limits on what you can control. <br/><br/><em>Focus Area:</em> Continuing to beg for basic effort will only deplete you. Your path forward requires establishing non-negotiable boundaries, looking objectively at their patterns instead of their promises, and deciding if you can accept this person as they are today.";
+            } else {
+                badgeClass = "badge-dynamic";
+                badgeText = "Dynamic System Profile";
+                profileTitle = "The Reactive Loop Cycle";
+                profileDesc = "<strong>Your Diagnostic:</strong> Your path indicates that the friction is not caused by one single person, but by a <strong>reactive loop</strong> you have both constructed. Your partner's defense mechanism (like shutting down) acts as a perfect trigger for your worst insecurity (which might make you push harder), locking you both in an endless loop.<br/><br/><em>Focus Area:</em> This loop requires both people to drop their defense patterns at the exact same time. Real change happens when you stop focusing on who started it and start looking at how you are both participating.";
+            }
+
+            // Apply badges and styling structures
+            badge.className = `badge ${badgeClass}`;
+            badge.innerText = badgeText;
+            title.innerText = profileTitle;
+            text.innerHTML = profileDesc;
+
+            resultsCard.style.display = "block";
+            resultsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        // Reset and clear evaluation tracking states
+        document.getElementById("resetBtn").addEventListener("click", function() {
+            currentStepId = "start";
+            pathHistory = [];
+            answers = {};
+            
+            resultsCard.style.display = "none";
+            document.querySelector(".wizard-container").style.display = "block";
+            progressWrapper.style.display = "flex";
+            
+            renderStep();
+        });
+
+        // Initialize first view
+        renderStep();
+    });
+/*]]>*/
+</script>
+
+</body>
+</html>
